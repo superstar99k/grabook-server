@@ -1,0 +1,619 @@
+openapi: 3.0.1
+info:
+  title: grabook
+  description: The API documents of grabook.
+  version: 1.0.0
+
+servers:
+  - url: http://api.grabook.local/api/v1
+
+paths:
+  /auth/password:
+    post:
+      tags:
+        - Auth
+      summary: パスワードログインAPI
+      description: sanctumを利用したパスワード認証
+      parameters:
+        - name: Referer
+          in: header
+          required: true
+          schema:
+            type: string
+          description: リクエスト元のドメインをセット（この値とenvの`SANCTUM_STATEFUL_DOMAINS`を照合）
+          example: "api.grabook.local"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "admin@admin.com"
+                password:
+                  type: string
+                  example: "11111111"
+      responses:
+        '200':
+          description: ログイン成功（User model）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'メールアドレスまたはパスワードが一致しませんでした。'
+        '419':
+          description: csrfトークンエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'CSRF token mismatch.'
+        '422':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'メールアドレスは最大64文字まで保存可能です。 (and 1 more error)'
+                  errors:
+                    type: object
+
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: ログアウト
+      description: ログアウトAPI
+      parameters:
+        - name: Referer
+          required: true
+          in: header
+          schema:
+            type: string
+          description: リクエスト元のドメインをセット（この値とenvの`SANCTUM_STATEFUL_DOMAINS`を照合）
+          example: "api.grabook.local"
+      responses:
+        '200':
+          description: ログアウト成功
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /auth/me:
+    get:
+      tags:
+        - Auth
+      summary: ユーザー情報取得API
+      description: ログインユーザ情報の取得API
+      parameters:
+        - in: header
+          name: Accept
+          required: true
+          schema:
+            type: string
+          example: 'application/json'
+        - name: Origin
+          required: true
+          in: header
+          schema:
+            type: string
+          example: 'api.grabook.local'
+      responses:
+        '200':
+          description: User model
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: '未認証エラー'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'リクエストされた操作はご利用になれません。'
+
+  /auth/send_reset_password_email:
+    post:
+      tags:
+        - Auth
+      summary: パスワードリセットメール送信API
+      description: ユーザのパスワードリセット用のメールリンクを本文に入れたメールをユーザに送信する。<br>
+        パスワードリセット用リンク：リセット対象のユーザを特定できる識別用ハッシュ値を付与する。<br>
+        送信先メールアドレス：確認用メールアドレスに送信<br>
+        参考送信内容：<br>
+        件名:<br>
+        パスワード再設定用URLのお知らせ<br>
+        本文:<br>
+        パスワード再設定用URLにアクセスして、パスワードを再設定してください。<br>
+        <br>
+        【パスワード再設定用URL】<br>
+        http://grabook.local/auth/reset_password<br>
+        <br>
+        ※URLが改行されている場合は、1行につなげてブラウザのアドレスバーに入力してください<br>
+        <br>
+        お心当たりのない方は、このメールを破棄してください。
+      parameters:
+        - name: Referer
+          in: header
+          required: true
+          schema:
+            type: string
+          description: リクエスト元のドメインをセット（この値とenvの`SANCTUM_STATEFUL_DOMAINS`を照合）
+          example: "api.grabook.local"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: ログイン用メールアドレス
+                  example: "admin@admin.com"
+                email_confirmation:
+                  type: string
+                  description: 確認用メールアドレス
+                  example: "email_confirmation@admin.com"
+      responses:
+        '200':
+          description: パスワードリセットメール送信完了
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: メールアドレスが存在する場合は、`sent`。指定ユーザがいない場合は`no send`。ユーザの存在が漏洩しない様に200で返す
+                    example: 'sent'
+        '419':
+          description: csrfトークンエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'CSRF token mismatch.'
+        '422':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'メールアドレスは最大64文字まで保存可能です。 (and 1 more error)'
+                  errors:
+                    type: object
+        '500':
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Server Error'
+
+  /auth/reset_password:
+    post:
+      tags:
+        - Auth
+      summary: パスワードリセットAPI
+      description: パスワードリセットメールのリンクから、パスワード・確認用パスワード・ユーザ識別値を受け指定ユーザのパスワードのリセット
+      parameters:
+        - name: Referer
+          in: header
+          required: true
+          schema:
+            type: string
+          description: リクエスト元のドメインをセット（この値とenvの`SANCTUM_STATEFUL_DOMAINS`を照合）
+          example: "api.grabook.local"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                  description: パスワード
+                  example: "12345678"
+                password_confirmation:
+                  type: string
+                  description: 確認用パスワード
+                  example: "12345678"
+                verification_code:
+                  type: string
+                  description: ユーザ識別値
+                  example: "*****************"
+      responses:
+        '200':
+          description: パスワードリセット完了
+          content:
+            application/json:
+              schema:
+                type: object
+        '419':
+          description: csrfトークンエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'CSRF token mismatch.'
+        '422':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'パスワードは最大16文字まで保存可能です。 (and 1 more error)'
+                  errors:
+                    type: object
+        '500':
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Server Error'
+  /auth/verify:
+    post:
+      tags:
+        - Auth
+      parameters:
+        - name: Referer
+          in: header
+          required: true
+          schema:
+            type: string
+          description: リクエスト元のドメインをセット（この値とenvの`SANCTUM_STATEFUL_DOMAINS`を照合）
+          example: "api.grabook.local"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                verification_code:
+                  type: string
+                  description: '承認コード'
+      responses:
+        '200':
+          description: パスワードリセット完了
+          content:
+            application/json:
+              schema:
+                type: object
+        '419':
+          description: csrfトークンエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'CSRF token mismatch.'
+        '422':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: '承認コードが存在していません'
+                  errors:
+                    type: object
+        '500':
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'Server Error'
+
+  /admin/pref:
+    get:
+      tags:
+        - Pref
+      summary: 都道府県一覧
+      description: 都道府県の情報を取得
+      responses:
+        '200':
+          description: 都道府県一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        description: '都道府県id'
+                      name:
+                        type: string
+                        description: '都道府県名'
+
+  /admin/users:
+    get:
+      tags:
+        - User
+      summary: ユーザー一覧
+      description: ユーザーテーブルの情報を取得
+      responses:
+        '200':
+          description: 登録された全てのユーザー情報が返却される
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        description: ユーザーid
+                      name:
+                        type: string
+                        description: 顧客名
+                      status:
+                        type: string
+                        description: ステータス
+    post:
+      tags:
+        - User
+      summary: ユーザー情報新規登録
+      description: ユーザー情報を新規登録
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 名前
+                email:
+                  type: string
+                  description: メールアドレス
+      responses:
+        '200':
+          description: User model
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+  /admin/users/{id}:
+    get:
+      tags:
+        - User
+      summary: ユーザー情報詳細
+      description: ユーザー情報詳細を取得
+      parameters:
+        - in: path
+          name: id
+          description: ユーザーid
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User model
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+    put:
+      tags:
+        - User
+      summary: ユーザー情報更新
+      description: ユーザー情報を更新する
+      parameters:
+        - in: path
+          name: id
+          description: ユーザーid
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: 名前
+                email:
+                  type: string
+                  description: メールアドレス
+                password:
+                  type: string
+                  description: パスワード
+      responses:
+        '200':
+          description: User model
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+  /admin/users/{id}/deactivate:
+    patch:
+      tags:
+        - User
+      summary: ユーザー情報無効
+      description: ユーザー情報を無効化する
+      parameters:
+        - in: path
+          name: id
+          description: ユーザーid
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User model
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+  /admin/users/{id}/activate:
+    patch:
+      tags:
+        - User
+      summary: ユーザー情報有効
+      description: ユーザー情報を有効化する
+      parameters:
+        - in: path
+          name: id
+          description: ユーザーid
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User model
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 'testuser'
+        email:
+          type: integer
+          example: 'email@email.com'
+        password:
+          type: string
+          example: 'password'
+        verification_code:
+          type: string
+        verified_at:
+          type: string
+          example: null
+        status:
+          type: string
+          example: 'pending'
+        update_user_id:
+          type: string
+          example: null
+        created_at:
+          type: integer
+          example: null
+        updated_at:
+          type: string
+          example: null
+        deleted_at:
+          type: string
+          example: null
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: '企業id'
+        name:
+          type: string
+          description: '企業名'
+        postal_code:
+          type: string
+          description: '郵便番号'
+        pref_id:
+          type: integer
+          description: '都道府県id'
+        city:
+          type: string
+          description: '市区町村'
+        address:
+          type: string
+          description: '町域・番地'
+        building:
+          type: string
+          description: '建物名など'
+        tel:
+          type: string
+          description: '電話番号'
+        fax:
+          type: string
+          description: 'FAX番号'
+        teikoku_databank_file:
+          type: string
+          description: '帝国データバンク'
+        end_month_closing:
+          type: boolean
+          description: '末日締め'
+        closing_day:
+          type: integer
+          description: '締日'
+        bank_accounts:
+          type: object
+        update_user_id:
+          type: integer
+          description: '更新ユーザーID'

@@ -1,0 +1,52 @@
+{
+    "private": true,
+    "scripts": {
+        "dev": "vite --host grabook.local --port 3000",
+        "build": "vite build",
+        "lint": "eslint resources/js/**/*.{js,vue} vite.config.js stylelint.config.js .eslintrc.js && stylelint resources/**/*.{scss,vue}",
+        "lint:fix": "eslint --fix resources/js/**/*.{js,vue} vite.config.js stylelint.config.js .eslintrc.js && stylelint resources/**/*.{scss,vue}",
+        "test": "vitest run resources/js/tests/unit",
+        "test:watch": "vitest resources/js/tests/unit"
+    },
+    "devDependencies": {
+        "@stylelint/postcss-css-in-js": "^0.38.0",
+        "@testing-library/vue": "^6.6.0",
+        "@vue/eslint-config-prettier": "^7.0.0",
+        "autoprefixer": "^10.4.7",
+        "axios": "^0.25",
+        "eslint": "^8.22.0",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-plugin-prettier-vue": "^4.2.0",
+        "eslint-plugin-vue": "^9.3.0",
+        "happy-dom": "^6.0.3",
+        "laravel-vite-plugin": "^0.6.1",
+        "postcss": "^8.4.14",
+        "prettier": "^2.7.1",
+        "sass": "^1.53.0",
+        "stylelint": "^14.9.1",
+        "stylelint-config-prettier": "^9.0.3",
+        "stylelint-config-standard": "^26.0.0",
+        "terser": "^5.14.1",
+        "vitest": "^0.23.4"
+    },
+    "dependencies": {
+        "@vee-validate/i18n": "^4.6.2",
+        "@vee-validate/rules": "^4.6.2",
+        "@vitejs/plugin-legacy": "^2.2.0",
+        "@vitejs/plugin-vue": "^3.1.0",
+        "@vuepic/vue-datepicker": "^3.4.7",
+        "bootstrap": "^5.1.3",
+        "dayjs": "^1.11.5",
+        "decamelize": "^6.0.0",
+        "events": "^3.3.0",
+        "lodash.debounce": "^4.0.8",
+        "lodash.merge": "^4.6.2",
+        "qs": "^6.11.0",
+        "v3-infinite-loading": "^1.2.1",
+        "vee-validate": "^4.6.2",
+        "vite": "^3.1.3",
+        "vue": "^3.2.37",
+        "vue-router": "^4.1.3",
+        "vuex": "^4.0.2"
+    }
+}

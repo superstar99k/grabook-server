@@ -1,0 +1,29 @@
+.required {
+  &::after {
+    display: inline-block;
+    content: '*';
+    margin-left: 5px;
+    color: red;
+  }
+}
+
+.x-scroll-table {
+  display: block;
+  max-width: -moz-fit-content;
+  max-width: fit-content;
+  margin: 0 auto;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.table-border-none > :not(caption)>*>*{
+  border-bottom-width: 0px;
+}
+
+.table-light-dark {
+  background-color: $color-light-dark;
+  th {
+    background-color: $color-light-dark;
+    color: #ffffff;
+  }
+}
